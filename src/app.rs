@@ -1,3 +1,5 @@
+use std::{future::Future, sync::Arc};
+
 use iced::{
     alignment::Horizontal,
     executor,
@@ -12,7 +14,7 @@ use miette::Diagnostic;
 use thiserror::Error;
 use zbus::{connection, Connection};
 
-use crate::config::Config;
+use crate::config::{ActionMethod, Config};
 
 pub struct App {
     config: Config,
@@ -68,28 +70,38 @@ impl Application for App {
                 }
             },
 
-            Self::Message::Lock => Task::perform(
-                Self::lock(self.connection.clone()),
-                Self::Message::LogindResult,
+            Self::Message::Lock => Self::action_task(
+                "Lock",
+                self.config.actions.lock.clone(),
+                self.connection.clone(),
+                Self::lock,
             ),
-            Self::Message::LogOut => Task::perform(
-                Self::terminate(self.connection.clone()),
-                Self::Message::LogindResult,
+            Self::Message::LogOut => Self::action_task(
+                "Log Out",
+                self.config.actions.log_out.clone(),
+                self.connection.clone(),
+                Self::terminate,
             ),
-            Self::Message::Hibernate => Task::perform(
-                Self::hibernate(self.connection.clone()),
-                Self::Message::LogindResult,
+            Self::Message::Hibernate => Self::action_task(
+                "Hibernate",
+                self.config.actions.hibernate.clone(),
+                self.connection.clone(),
+                Self::hibernate,
             ),
-            Self::Message::Reboot => Task::perform(
-                Self::reboot(self.connection.clone()),
-                Self::Message::LogindResult,
+            Self::Message::Reboot => Self::action_task(
+                "Reboot",
+                self.config.actions.reboot.clone(),
+                self.connection.clone(),
+                Self::reboot,
             ),
-            Self::Message::Shutdown => Task::perform(
-                Self::power_off(self.connection.clone()),
-                Self::Message::LogindResult,
+            Self::Message::Shutdown => Self::action_task(
+                "Shutdown",
+                self.config.actions.shutdown.clone(),
+                self.connection.clone(),
+                Self::power_off,
             ),
 
-            Self::Message::LogindResult(result) => match result {
+            Self::Message::ActionResult(result) => match result {
                 Ok(_) => Task::none(),
                 Err(err) => {
                     tracing::error!("Failed to perform logind action: {err}");
@@ -102,11 +114,6 @@ impl Application for App {
     }
 
     fn view(&self) -> iced::Element<'_, Self::Message, Self::Theme, iced::Renderer> {
-        // Lock,
-        // LogOut,
-        // Hibernate,
-        // Reboot,
-        // Shutdown,
         let waypwr_btn = |icon: Nerd, str: &'static str, msg: Self::Message| {
             button(center(
                 column![
@@ -139,7 +146,7 @@ impl Application for App {
     }
 }
 
-macro_rules! login_fns {
+macro_rules! logind_fns {
     (
         $(
             $root:ident => [
@@ -177,6 +184,21 @@ impl App {
             .await?)
     }
 
+    fn action_task<DF>(
+        action: &'static str,
+        method: ActionMethod,
+        connection: Option<Connection>,
+        dbus_fn: impl Fn(Option<Connection>) -> DF,
+    ) -> Task<AppMsg>
+    where
+        DF: Future<Output = AppResult<()>> + Send + 'static,
+    {
+        match method {
+            ActionMethod::Dbus => Task::perform(dbus_fn(connection), AppMsg::ActionResult),
+            ActionMethod::Cmd(args) => Task::perform(Self::cmd(action, args), AppMsg::ActionResult),
+        }
+    }
+
     async fn get_logind_manager(connection: &'_ Connection) -> AppResult<ManagerProxy<'_>> {
         Ok(ManagerProxy::new(connection).await?)
     }
@@ -185,7 +207,7 @@ impl App {
         Ok(SessionProxy::new(connection).await?)
     }
 
-    login_fns![
+    logind_fns![
         get_logind_session => [
             lock["Failed to lock the session"],
             terminate["Failed to terminate the session"],
@@ -196,6 +218,23 @@ impl App {
             power_off["Failed to power off"](false),
         ],
     ];
+
+    async fn cmd(action: impl Into<String>, args: Vec<String>) -> AppResult<()> {
+        let program = args
+            .first()
+            .ok_or_else(|| AppError::ActionCMDEmpty(action.into()))?;
+
+        let mut cmd = tokio::process::Command::new(program);
+
+        if args.len() > 1 {
+            cmd.args(&args[1..]);
+        }
+
+        let mut process = cmd.spawn().map_err(Arc::new)?;
+        process.wait().await.map_err(Arc::new)?;
+
+        Ok(())
+    }
 }
 
 #[to_layer_message]
@@ -211,16 +250,21 @@ pub enum AppMsg {
     Reboot,
     Shutdown,
 
-    LogindResult(AppResult<()>),
+    ActionResult(AppResult<()>),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
 
 #[derive(Debug, Clone, Error, Diagnostic)]
 pub enum AppError {
+    #[error("Empty cmd args list for action {0}")]
+    ActionCMDEmpty(String),
+
     #[error("No dbus connection!")]
     NoDBusConnection,
 
     #[error("Failed to connect to session bus: {0}")]
     ZBus(#[from] zbus::Error),
+    #[error("IO: {0}")]
+    IO(#[from] Arc<std::io::Error>),
 }

@@ -4212,7 +4212,7 @@ dependencies = [
 
 [[package]]
 name = "waypwr"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "directories",
@@ -4225,6 +4225,7 @@ dependencies = [
  "serde",
  "smart-default",
  "thiserror 2.0.11",
+ "tokio",
  "toml",
  "tracing",
  "tracing-subscriber",

@@ -12,6 +12,7 @@ pub struct Config {
     #[serde(serialize_with = "ser_theme", deserialize_with = "de_theme")]
     #[default(Theme::CatppuccinMocha)]
     pub theme: Theme,
+    pub actions: Actions,
 }
 
 impl Config {
@@ -157,3 +158,20 @@ serde_theme!(Theme => [
     Oxocarbon,
     Ferra
 ]);
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct Actions {
+    pub lock: ActionMethod,
+    pub log_out: ActionMethod,
+    pub hibernate: ActionMethod,
+    pub reboot: ActionMethod,
+    pub shutdown: ActionMethod,
+}
+
+#[derive(Default, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value", rename_all = "lowercase")]
+pub enum ActionMethod {
+    #[default]
+    Dbus,
+    Cmd(Vec<String>),
+}
