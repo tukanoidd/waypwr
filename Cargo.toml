@@ -1,0 +1,20 @@
+[package]
+name = "waypwr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.28", features = ["derive", "env", "unicode", "wrap_help", "cargo"] }
+directories = "6.0.0"
+heck = "0.5.0"
+iced = { version = "0.13.1", features = ["tokio"] }
+iced_fonts = { version = "0.1.1", features = ["nerd"] }
+iced_layershell = "0.13.2"
+logind-zbus = "5.1.0"
+serde = { version = "1.0.217", features = ["derive"] }
+smart-default = "0.7.1"
+snafu = "0.8.5"
+toml = "0.8.20"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+zbus = { version = "5.5.0", default-features = false, features = ["tokio"] }

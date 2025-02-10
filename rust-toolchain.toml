@@ -1,0 +1,11 @@
+[toolchain]
+channel = "nightly"
+components = [
+    "rustc",
+    "rust-src",
+    "rust-std",
+    "rust-analysis",
+    "rustfmt",
+    "clippy",
+    "rust-analyzer",
+]
