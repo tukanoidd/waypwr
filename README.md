@@ -1,4 +1,4 @@
-![Crates.io Version](https://img.shields.io/crates/v/waypwr)
+[![Crates.io Version](https://img.shields.io/crates/v/waypwr)](https://crates.io/crates/waypwr)
 
 # What
 Wayland power menu
