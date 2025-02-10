@@ -1,3 +1,5 @@
+![Crates.io Version](https://img.shields.io/crates/v/waypwr)
+
 # What
 Wayland power menu
 
