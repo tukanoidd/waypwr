@@ -17,8 +17,14 @@ I use [directorties](https://docs.rs/directories/latest/directories/) to get ini
 Don't worry, the initial startup will create a default one for you!
 
 # How Config?
-Currently there's only 1 field available, `theme`, it can be set to any one of [these](https://docs.rs/iced/latest/iced/enum.Theme.html),
+- `theme` - it can be set to any one of [these](https://docs.rs/iced/latest/iced/enum.Theme.html),
 except for `Custom` one, in `kebab-case`.
+- actions (`lock`, `log_out`, `hibernate`, `reboot`, `shutdown`)
+```toml
+[actions]
+log_out = {type = "dbus"} # default
+lock = {type = "cmd", value = ["hyprlock"]}
+```
 
 # Can I choose config path through CLI?
 Absolutely! With `--config` flag.
