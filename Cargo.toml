@@ -27,6 +27,7 @@ iced = { version = "0.13.1", features = ["tokio"] }
 iced_fonts = { version = "0.1.1", features = ["nerd"] }
 iced_layershell = "0.13.2"
 
+tokio = { version = "1.43.0", features = ["rt-multi-thread", "process"] }
 zbus = { version = "5.5.0", default-features = false, features = ["tokio"] }
 logind-zbus = "5.1.0"
 
@@ -36,8 +37,9 @@ smart-default = "0.7.1"
 
 serde = { version = "1.0.217", features = ["derive"] }
 toml = "0.8.20"
+
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
+
 miette = { version = "7.5.0", features = ["fancy", "syntect-highlighter"] }
 thiserror = "2.0.11"
-tokio = { version = "1.43.0", features = ["rt-multi-thread", "process"] }
