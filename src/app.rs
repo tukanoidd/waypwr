@@ -171,7 +171,7 @@ macro_rules! login_fns {
 
 impl App {
     async fn zbus_connect() -> AppResult<Connection> {
-        Ok(connection::Builder::session()?
+        Ok(connection::Builder::system()?
             .internal_executor(false)
             .build()
             .await?)

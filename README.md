@@ -1,5 +1,5 @@
 # What
-Wayland power menu (WIP (logind dbus services is not available on NixOS at the minimum for me))
+Wayland power menu
 
 ![Screenshot](./assets/screenshot.png)
 
