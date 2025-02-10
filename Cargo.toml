@@ -1,9 +1,18 @@
 [package]
 name = "waypwr"
+description = "A power menu for Wayland"
+keywords = ["power", "menu", "wayland", "dbus", "logind"]
+
 version = "0.1.0"
 edition = "2021"
-license = "LICENSE"
+
 authors = ["Vitalii Lukyanov <tukanoid@outlook.com>"]
+
+homepage = "https://github.com/tukanoidd/waypwr/"
+repository = "https://github.com/tukanoidd/waypwr/"
+
+license-file = "LICENSE"
+readme = "README.md"
 
 [dependencies]
 clap = { version = "4.5.28", features = [
