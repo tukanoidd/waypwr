@@ -2,19 +2,32 @@
 name = "waypwr"
 version = "0.1.0"
 edition = "2021"
+license = "LICENSE"
+authors = ["Vitalii Lukyanov <tukanoid@outlook.com>"]
 
 [dependencies]
-clap = { version = "4.5.28", features = ["derive", "env", "unicode", "wrap_help", "cargo"] }
-directories = "6.0.0"
-heck = "0.5.0"
+clap = { version = "4.5.28", features = [
+  "derive",
+  "env",
+  "unicode",
+  "wrap_help",
+  "cargo",
+] }
+
 iced = { version = "0.13.1", features = ["tokio"] }
 iced_fonts = { version = "0.1.1", features = ["nerd"] }
 iced_layershell = "0.13.2"
+
+zbus = { version = "5.5.0", default-features = false, features = ["tokio"] }
 logind-zbus = "5.1.0"
-serde = { version = "1.0.217", features = ["derive"] }
+
+directories = "6.0.0"
+heck = "0.5.0"
 smart-default = "0.7.1"
-snafu = "0.8.5"
+
+serde = { version = "1.0.217", features = ["derive"] }
 toml = "0.8.20"
+
+snafu = "0.8.5"
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
-zbus = { version = "5.5.0", default-features = false, features = ["tokio"] }
