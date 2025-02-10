@@ -101,13 +101,13 @@ impl Application for App {
                 Self::power_off,
             ),
 
-            Self::Message::ActionResult(result) => match result {
-                Ok(_) => Task::none(),
-                Err(err) => {
+            Self::Message::ActionResult(result) => {
+                if let Err(err) = result {
                     tracing::error!("Failed to perform logind action: {err}");
-                    iced::exit()
                 }
-            },
+
+                iced::exit()
+            }
 
             _ => Task::none(),
         }

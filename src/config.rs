@@ -160,6 +160,7 @@ serde_theme!(Theme => [
 ]);
 
 #[derive(Default, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Actions {
     pub lock: ActionMethod,
     pub log_out: ActionMethod,
