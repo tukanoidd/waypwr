@@ -8,7 +8,8 @@ use iced::{
 use iced_fonts::{nerd::icon_to_string, Nerd, NERD_FONT};
 use iced_layershell::{to_layer_message, Application};
 use logind_zbus::{manager::ManagerProxy, session::SessionProxy};
-use snafu::{ResultExt, Whatever};
+use miette::Diagnostic;
+use thiserror::Error;
 use zbus::{connection, Connection};
 
 use crate::config::Config;
@@ -154,46 +155,34 @@ macro_rules! login_fns {
         $(,)?
     ) => {
         $($(
-            async fn $fn(connection: Option<Connection>) -> Result<(), String> {
+            async fn $fn(connection: Option<Connection>) -> AppResult<()> {
                 let Some(connection) = connection else {
-                    return Err("No dbus connection!".into());
+                    return Err(AppError::NoDBusConnection);
                 };
 
-                Self::$root(&connection)
+                Ok(Self::$root(&connection)
                     .await?
                     .$fn($($($param),+)?)
-                    .await
-                    .whatever_context($context)
-                    .map_err(|e: Whatever| e.to_string())
+                    .await?)
             }
         )+)+
     }
 }
 
 impl App {
-    async fn zbus_connect() -> Result<Connection, String> {
-        connection::Builder::session()
-            .whatever_context("Failed to create a session zbus connection builder")
-            .map_err(|e: Whatever| e.to_string())?
+    async fn zbus_connect() -> AppResult<Connection> {
+        Ok(connection::Builder::session()?
             .internal_executor(false)
             .build()
-            .await
-            .whatever_context("Failed to connect to the session bus")
-            .map_err(|e: Whatever| e.to_string())
+            .await?)
     }
 
-    async fn get_logind_manager(connection: &'_ Connection) -> Result<ManagerProxy<'_>, String> {
-        ManagerProxy::new(connection)
-            .await
-            .whatever_context("Failed to create logind manager proxy")
-            .map_err(|e: Whatever| e.to_string())
+    async fn get_logind_manager(connection: &'_ Connection) -> AppResult<ManagerProxy<'_>> {
+        Ok(ManagerProxy::new(connection).await?)
     }
 
-    async fn get_logind_session(connection: &'_ Connection) -> Result<SessionProxy<'_>, String> {
-        SessionProxy::new(connection)
-            .await
-            .whatever_context("Failed to create logind session proxy")
-            .map_err(|e: Whatever| e.to_string())
+    async fn get_logind_session(connection: &'_ Connection) -> AppResult<SessionProxy<'_>> {
+        Ok(SessionProxy::new(connection).await?)
     }
 
     login_fns![
@@ -214,7 +203,7 @@ impl App {
 pub enum AppMsg {
     Quit,
 
-    ZbusConnected(Result<Connection, String>),
+    ZbusConnected(AppResult<Connection>),
 
     Lock,
     LogOut,
@@ -222,5 +211,16 @@ pub enum AppMsg {
     Reboot,
     Shutdown,
 
-    LogindResult(Result<(), String>),
+    LogindResult(AppResult<()>),
+}
+
+pub type AppResult<T> = Result<T, AppError>;
+
+#[derive(Debug, Clone, Error, Diagnostic)]
+pub enum AppError {
+    #[error("No dbus connection!")]
+    NoDBusConnection,
+
+    #[error("Failed to connect to session bus: {0}")]
+    ZBus(#[from] zbus::Error),
 }

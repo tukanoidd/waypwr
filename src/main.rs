@@ -12,12 +12,13 @@ use iced_layershell::{
     settings::{LayerShellSettings, Settings, StartMode},
     Application,
 };
-use snafu::{report, ResultExt, Whatever};
+use miette::IntoDiagnostic;
 use tracing::Level;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-#[report]
-pub fn main() -> Result<(), Whatever> {
+pub fn main() -> miette::Result<()> {
+    miette::set_panic_hook();
+
     let Cli {
         config,
         theme,
@@ -47,12 +48,12 @@ pub fn main() -> Result<(), Whatever> {
         fonts: vec![REQUIRED_FONT_BYTES.into(), NERD_FONT_BYTES.into()],
         ..Default::default()
     })
-    .whatever_context("Failed to run the app")?;
+    .into_diagnostic()?;
 
     Ok(())
 }
 
-fn init_logging(quiet: bool, debug: bool, trace: bool) -> Result<(), Whatever> {
+fn init_logging(quiet: bool, debug: bool, trace: bool) -> miette::Result<()> {
     let level = quiet
         .then_some(Level::WARN)
         .or_else(|| (debug || cfg!(debug_assertions)).then_some(Level::DEBUG))
@@ -63,7 +64,7 @@ fn init_logging(quiet: bool, debug: bool, trace: bool) -> Result<(), Whatever> {
         .with(tracing_subscriber::fmt::layer().pretty())
         .with(tracing_subscriber::filter::LevelFilter::from(level))
         .try_init()
-        .whatever_context("Failed to initialize logging")?;
+        .into_diagnostic()?;
 
     Ok(())
 }

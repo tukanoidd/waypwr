@@ -27,7 +27,7 @@ smart-default = "0.7.1"
 
 serde = { version = "1.0.217", features = ["derive"] }
 toml = "0.8.20"
-
-snafu = "0.8.5"
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
+miette = { version = "7.5.0", features = ["fancy", "syntect-highlighter"] }
+thiserror = "2.0.11"

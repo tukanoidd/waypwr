@@ -2,9 +2,9 @@ use std::{io::Write, path::PathBuf};
 
 use directories::ProjectDirs;
 use iced::Theme;
+use miette::IntoDiagnostic;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use smart_default::SmartDefault;
-use snafu::{OptionExt, ResultExt, Whatever};
 
 #[derive(SmartDefault, Serialize, Deserialize)]
 #[serde(default)]
@@ -15,12 +15,12 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn open(path: Option<PathBuf>) -> Result<Self, Whatever> {
+    pub fn open(path: Option<PathBuf>) -> miette::Result<Self> {
         let path = match path {
             Some(path) => path,
             None => {
                 let proj_dirs = ProjectDirs::from("com", "tukanoidd", "waypwr")
-                    .whatever_context("Unable to get project directories")?;
+                    .ok_or_else(|| miette::miette!("Unable to get project directories"))?;
 
                 let config_dir = proj_dirs.config_local_dir();
 
@@ -29,9 +29,7 @@ impl Config {
                         "Config directory at {config_dir:?} doesn't exist, creating a new one"
                     );
 
-                    std::fs::create_dir_all(config_dir).whatever_context(format!(
-                        "Failed to create a config directory at {config_dir:?}"
-                    ))?;
+                    std::fs::create_dir_all(config_dir).into_diagnostic()?;
                 }
 
                 config_dir.join("config.toml")
@@ -39,27 +37,22 @@ impl Config {
         };
 
         match path.exists() {
-            true => toml::from_str(
-                &std::fs::read_to_string(&path).whatever_context("Failed to read config")?,
-            )
-            .whatever_context("Failed to parse config"),
+            true => {
+                toml::from_str(&std::fs::read_to_string(&path).into_diagnostic()?).into_diagnostic()
+            }
 
             false => {
                 tracing::warn!("No config file found, creating a default one at {path:?}");
 
                 let config = Self::default();
 
-                let mut file = std::fs::File::create(&path).whatever_context(format!(
-                    "Failed to create a default config file at {path:?}"
-                ))?;
+                let mut file = std::fs::File::create(&path).into_diagnostic()?;
                 file.write_all(
                     toml::to_string_pretty(&config)
-                        .whatever_context("Failed to serialize default config")?
+                        .into_diagnostic()?
                         .as_bytes(),
                 )
-                .whatever_context(format!(
-                    "Failed to write a default config to a file at {path:?}"
-                ))?;
+                .into_diagnostic()?;
 
                 Ok(config)
             }
