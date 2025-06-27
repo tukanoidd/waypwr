@@ -1,3 +1,6 @@
+# ARCHIVED
+Integrated code into [leaper](https://github.com/tukanoidd/leaper)
+
 [![Crates.io Version](https://img.shields.io/crates/v/waypwr)](https://crates.io/crates/waypwr)
 
 # What
